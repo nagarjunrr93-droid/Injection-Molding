@@ -36,7 +36,7 @@ const BrandLogo: React.FC<{ className?: string, layout?: 'horizontal' | 'vertica
   );
 };
 
-const MetricHeaderCard = ({ label, value, unit, icon: Icon, subtext, color = "blue" }: any) => {
+const MetricHeaderCard = ({ label, value, unit, icon: Icon, subtext, color = "blue", highlighted = false }: any) => {
   const colors: Record<string, string> = {
     blue: "text-blue-600",
     indigo: "text-indigo-600",
@@ -44,17 +44,17 @@ const MetricHeaderCard = ({ label, value, unit, icon: Icon, subtext, color = "bl
     green: "text-emerald-500"
   };
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between">
+    <div className={`p-5 rounded-xl border shadow-sm flex flex-col justify-between transition-all ${highlighted ? 'bg-[#0E4C7A] text-white border-transparent' : 'bg-white border-slate-100 text-slate-900'}`}>
       <div className="flex items-center gap-2 mb-3">
-        <Icon size={18} className={colors[color]} />
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</span>
+        <Icon size={18} className={highlighted ? "text-blue-200" : colors[color]} />
+        <span className={`text-[10px] font-black uppercase tracking-widest ${highlighted ? "text-blue-100" : "text-slate-400"}`}>{label}</span>
       </div>
       <div>
         <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-black text-slate-900 tracking-tight">{value}</span>
-          <span className="text-sm font-bold text-slate-400">{unit}</span>
+          <span className={`text-3xl font-black tracking-tight ${highlighted ? "text-white" : "text-slate-900"}`}>{value}</span>
+          <span className={`text-sm font-bold ${highlighted ? "text-blue-200" : "text-slate-400"}`}>{unit}</span>
         </div>
-        <p className="text-[10px] text-slate-400 mt-1 font-medium">{subtext}</p>
+        <p className={`text-[10px] mt-1 font-medium ${highlighted ? "text-blue-200" : "text-slate-400"}`}>{subtext}</p>
       </div>
     </div>
   );
@@ -118,17 +118,13 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] font-sans">
       <header className="bg-white border-b border-slate-200 py-4 px-8 sticky top-0 z-50">
         <div className="max-w-[1800px] mx-auto flex justify-between items-center">
-          <BrandLogo className="w-48 h-auto" layout="horizontal" />
+          <BrandLogo className="w-96 h-auto" layout="horizontal" />
           <div className="flex flex-col items-center">
              <h1 className="text-xl font-black text-[#0E4C7A] uppercase tracking-tighter">Injection Molding Cycle Time Calculator</h1>
           </div>
           <div className="hidden lg:flex items-center gap-4">
-             <div className="text-right">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selected Machine</p>
-                <p className="text-sm font-black text-[#0E4C7A]">{results.selectedMachineTons || 0} Tonnes Clamp Force</p>
-             </div>
              <div className="p-2 bg-blue-50 text-[#0E4C7A] rounded-lg">
-                <Activity size={20} />
+                <Activity size={24} />
              </div>
           </div>
         </div>
@@ -137,16 +133,44 @@ const App: React.FC = () => {
       <main className="max-w-[1800px] mx-auto p-4 lg:p-6 space-y-6">
         {/* Top Summary Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricHeaderCard label="Required Tonnage" value={results.requiredTonnage.toFixed(1)} unit="Tons" icon={Weight} subtext={`Assigned: ${results.selectedMachineTons || 0} Ton Machine`} color="blue" />
-          <MetricHeaderCard label="Total Area" value={Math.round(results.totalProjectedAreaCm2)} unit="cm²" icon={Boxes} subtext={`${results.areaPerCavityCm2.toFixed(2)} cm² per cavity`} color="indigo" />
-          <MetricHeaderCard label="Energy Use" value={results.energyConsumptionKwh.toFixed(3)} unit="kWh" icon={Zap} subtext="Per complete shot" color="orange" />
-          <MetricHeaderCard label="Material Carbon" value={results.materialCo2Kg.toFixed(3)} unit="kg" icon={Leaf} subtext="Raw mat production impact" color="green" />
+          <MetricHeaderCard 
+            label="Required Tonnage" 
+            value={results.requiredTonnage.toFixed(1)} 
+            unit="Tons" 
+            icon={Weight} 
+            subtext="Calculated clamp force" 
+            color="blue" 
+          />
+          <MetricHeaderCard 
+            label="Total Cycle Time" 
+            value={results.totalCycleTimeSec.toFixed(1)} 
+            unit="s" 
+            icon={Timer} 
+            subtext="Primary performance metric" 
+            color="indigo" 
+            highlighted={true}
+          />
+          <MetricHeaderCard 
+            label="Selected Machine Tonnage to produce the part" 
+            value={results.selectedMachineTons || 0} 
+            unit="Tons" 
+            icon={Hexagon} 
+            subtext="Optimal machine selection" 
+            color="orange" 
+          />
+          <MetricHeaderCard 
+            label="Material Carbon" 
+            value={results.materialCo2Kg.toFixed(3)} 
+            unit="kg" 
+            icon={Leaf} 
+            subtext="Raw mat production impact" 
+            color="green" 
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: Inputs */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Material Card */}
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-5">
               <div className="flex items-center gap-2 text-[#0E4C7A]">
                 <Settings size={18} />
@@ -179,7 +203,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Part Configuration */}
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-5">
               <div className="flex items-center gap-2 text-[#0E4C7A]">
                 <Ruler size={18} />
@@ -216,7 +239,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Production Details */}
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-5">
               <div className="flex items-center gap-2 text-[#0E4C7A]">
                 <Activity size={18} />
@@ -243,22 +265,19 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Middle Column: Production Cycle Profile */}
+          {/* Middle Column: Cycle Time Breakdown */}
           <div className="lg:col-span-6 space-y-6">
             <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm min-h-[600px] flex flex-col">
               <div className="flex justify-between items-center mb-10">
                 <div className="flex items-center gap-3">
                   <Timer className="text-orange-500" size={24} />
-                  <h2 className="text-xl font-black text-slate-900 tracking-tight">Production Cycle Profile</h2>
-                </div>
-                <div className="bg-slate-900 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">
-                  {(partWeight * cavities * (1 + runnerPct/100)).toFixed(1)}g Shot
+                  <h2 className="text-xl font-black text-slate-900 tracking-tight">Cycle Time Breakdown</h2>
                 </div>
               </div>
 
-              <div className="space-y-10 flex-grow">
+              <div className="space-y-8 flex-grow">
                 <ProgressBar 
-                  label="1. Injection Stage" 
+                  label="1. Injection Time" 
                   description={`Rate: ${results.injRateCm3s?.toFixed(1) || 0} cm³/s`}
                   subValue={`Shot Vol: ${results.shotVolumeCm3.toFixed(2)} cm³`}
                   time={results.injTimeSec} 
@@ -266,7 +285,7 @@ const App: React.FC = () => {
                   color="bg-blue-500" 
                 />
                 <ProgressBar 
-                  label="2. Cooling Stage" 
+                  label="2. Cooling Time" 
                   description={`Thk: ${wallThickness}mm`}
                   subValue={`Diff: ${selectedMaterial.thermalDiffusivityMm2s} mm²/s`}
                   time={results.coolTimeSec} 
@@ -291,20 +310,32 @@ const App: React.FC = () => {
                 />
               </div>
 
-              <div className="mt-12 p-6 bg-[#F8FAFC] rounded-2xl flex justify-between items-center border border-slate-100">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white rounded-xl shadow-sm">
-                    <Hexagon size={24} className="text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selected Machine Rank</p>
-                    <p className="text-lg font-black text-slate-900">{results.selectedMachineTons || 0} Tonnes Clamp Force</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Efficiency Benchmark</p>
-                  <p className="text-lg font-black text-blue-600 uppercase tracking-tighter">Optimal Match</p>
-                </div>
+              {/* Added Area, Energy, and G/Shot as the primary results display area */}
+              <div className="mt-12 grid grid-cols-3 gap-4">
+                 <div className="bg-[#F8FAFC] p-6 rounded-2xl border border-slate-100 shadow-sm">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Area</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-black text-slate-900">{Math.round(results.totalProjectedAreaCm2)}</span>
+                      <span className="text-xs font-bold text-slate-400">cm²</span>
+                    </div>
+                    <p className="text-[9px] font-bold text-slate-300 uppercase mt-1">{results.areaPerCavityCm2.toFixed(2)} cm² / cavity</p>
+                 </div>
+                 <div className="bg-[#F8FAFC] p-6 rounded-2xl border border-slate-100 shadow-sm">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Energy Use</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-black text-slate-900">{results.energyConsumptionKwh.toFixed(3)}</span>
+                      <span className="text-xs font-bold text-slate-400">kWh</span>
+                    </div>
+                    <p className="text-[9px] font-bold text-slate-300 uppercase mt-1">Per complete shot</p>
+                 </div>
+                 <div className="bg-[#F8FAFC] p-6 rounded-2xl border border-slate-100 shadow-sm">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">g/shot</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-black text-slate-900">{(partWeight * cavities * (1 + runnerPct/100)).toFixed(1)}</span>
+                      <span className="text-xs font-bold text-slate-400">g</span>
+                    </div>
+                    <p className="text-[9px] font-bold text-slate-300 uppercase mt-1">Total weight incl. runner</p>
+                 </div>
               </div>
             </div>
           </div>

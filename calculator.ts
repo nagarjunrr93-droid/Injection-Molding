@@ -27,20 +27,23 @@ export function calculateAreaMm2(shape: Shape, dimensions: Record<string, number
 
 export function getMachineParams(requiredTon: number) {
   if (requiredTon <= 0) return null;
-  const closestTon = MACHINES.reduce((prev, curr) => 
-    Math.abs(curr.tons - requiredTon) < Math.abs(prev.tons - requiredTon) ? curr : prev
-  ).tons;
-
-  const matches = MACHINES.filter(m => m.tons === closestTon);
-  const best = matches.sort((a, b) => {
-    if (b.injRateMm3s !== a.injRateMm3s) return b.injRateMm3s - a.injRateMm3s;
-    return a.dryCycleSec - b.dryCycleSec;
-  })[0];
+  
+  // Find all machines that can handle the tonnage (tons >= requiredTon)
+  const suitableMachines = MACHINES.filter(m => m.tons >= requiredTon);
+  
+  let bestMatch: Machine;
+  if (suitableMachines.length > 0) {
+    // Pick the smallest machine that fits (one level up logic)
+    bestMatch = suitableMachines.reduce((prev, curr) => curr.tons < prev.tons ? curr : prev);
+  } else {
+    // If no machine is big enough, pick the largest available
+    bestMatch = MACHINES.reduce((prev, curr) => curr.tons > prev.tons ? curr : prev);
+  }
 
   return {
-    selectedTons: best.tons,
-    dryCycleSec: best.dryCycleSec,
-    injRateCm3s: best.injRateMm3s / 1000.0,
+    selectedTons: bestMatch.tons,
+    dryCycleSec: bestMatch.dryCycleSec,
+    injRateCm3s: bestMatch.injRateMm3s / 1000.0,
   };
 }
 
@@ -103,11 +106,9 @@ export function computeAll(
   const totalCycleTimeSec = (machine ? machine.dryCycleSec : 0) + injTimeSec + coolTimeSec + ejectionBlockSec + insertLoadingSec;
 
   // CO2 Calculations
-  // 1. Material CO2 (From producing the shot)
   const materialCo2Kg = (shotWeightG / 1000.0) * material.co2FactorKgPerKg;
 
-  // 2. Processing CO2 (Energy consumption)
-  // SEC (Specific Energy Consumption) benchmark: ~0.6 kWh per kg of processed plastic for modern machines
+  // Processing CO2
   const secEfficiency = 0.6; 
   const energyConsumptionKwh = (shotWeightG / 1000.0) * secEfficiency;
   const processingCo2Kg = energyConsumptionKwh * gridEmissionFactor;
