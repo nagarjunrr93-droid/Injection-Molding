@@ -1,0 +1,5 @@
+{
+  "name": "Injection Molding Cycle Time Calculator",
+  "description": "A comprehensive tool for calculating plastic injection molding cycle times, required tonnage, and material usage based on part geometry and material properties.",
+  "requestFramePermissions": []
+}
